@@ -59,7 +59,7 @@ class ConfigurationSkill(MycroftSkill):
         self.schedule_repeating_event(self.update_remote, None, 60,
                                       'UpdateRemote')
 
-    @intent_handler(IntentBuilder('').require('Query').require('Name'))
+    @intent_handler(IntentBuilder('').require("What").require("Name"))
     def handle_query_name(self, message):
         device = DeviceApi().get()
         self.speak_dialog("my.name.is", data={"name": device["name"]})
@@ -115,10 +115,17 @@ class ConfigurationSkill(MycroftSkill):
     def handle_where_are_you(self, message):
         from mycroft.configuration.config import Configuration
         config = Configuration.get()
+        city= self.location['city']['name']
+        country= config["location"]["city"]["state"]["country"]["name"]
+
+        if city =='Riyadh':
+            city="الرياض"
+        if country =='Saudi Arabia':
+            country="المملكة العربية السعودية"
+
         data = {
-            "city": config["location"]["city"]["name"],
-            "state": config["location"]["city"]["state"]["name"],
-            "country": config["location"]["city"]["state"]["country"]["name"]
+            "city":city,
+            "country":country
         }
 
         self.speak_dialog("i.am.at", data)
@@ -131,8 +138,8 @@ class ConfigurationSkill(MycroftSkill):
         return ww_config.get('module', 'pocketsphinx')
 
     @intent_handler(IntentBuilder('SetListenerIntent').
-                    require('Set').
-                    require('Listener').
+                    require('SetKeyword').
+                    require('ListenerKeyword').
                     require('ListenerType'))
     @on_error_speak_dialog('must.update')
     def handle_set_listener(self, message):
@@ -167,8 +174,8 @@ class ConfigurationSkill(MycroftSkill):
         self.speak_dialog('set.listener', data={'listener': name})
 
     @intent_handler(IntentBuilder('UpdatePrecise').
-                    require('Update').
-                    require('Precise'))
+                    require('ConfigurationSkillUpdateVerb').
+                    require('PreciseKeyword'))
     @on_error_speak_dialog('must.update')
     def handle_update_precise(self):
         if self.get_listener() != 'precise':
@@ -184,8 +191,8 @@ class ConfigurationSkill(MycroftSkill):
             self.speak_dialog('models.not.found')
 
     @intent_handler(IntentBuilder('WhatPreciseModel').
-                    require('Query').
-                    require('Precise').
+                    require('What').
+                    require('PreciseKeyword').
                     require('Using'))
     @on_error_speak_dialog('must.update')
     def handle_what_precise_model(self):
@@ -199,8 +206,8 @@ class ConfigurationSkill(MycroftSkill):
             self.speak_dialog('model.is', {'name': model_name})
 
     @intent_handler(IntentBuilder('GetListenerIntent').
-                    require('Query').
-                    require('Listener'))
+                    require('GetKeyword').
+                    require('ListenerKeyword'))
     @on_error_speak_dialog('must.update')
     def handle_get_listener(self):
         module = self.get_listener()
@@ -208,8 +215,8 @@ class ConfigurationSkill(MycroftSkill):
         self.speak_dialog('get.listener', data={'listener': name})
 
     @intent_handler(IntentBuilder('UpdateConfigurationIntent').
-                    require('Update').
-                    require('Config'))
+                    require("ConfigurationSkillKeyword").
+                    require("ConfigurationSkillUpdateVerb"))
     def handle_update_intent(self, message):
         try:
             self.bus.emit(Message('mycroft.skills.settings.update'))
